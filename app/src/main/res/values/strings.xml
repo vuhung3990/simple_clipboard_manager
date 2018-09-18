@@ -1,0 +1,10 @@
+<resources>
+  <string name="app_name">Simple Clipboad Manager</string>
+  <string name="action_settings">Settings</string>
+  <string name="ok">Ok</string>
+  <string name="cancel">Cancel</string>
+  <string name="title_add_new_clipboard">Add new clipboard</string>
+  <string name="hint_add_new_clipboard">type text to add into clipboard</string>
+  <string name="search">Search</string>
+  <string name="notification_title">Most recent clipboard</string>
+</resources>
