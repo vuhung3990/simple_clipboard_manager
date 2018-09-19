@@ -11,6 +11,9 @@ import android.os.IBinder
 import android.support.v4.app.NotificationCompat
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
+import com.tux.simpleclipboadmanager.db.ClipBoardDao
+import com.tux.simpleclipboadmanager.db.Clipboard
+import kotlinx.coroutines.experimental.launch
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.android.closestKodein
@@ -28,6 +31,7 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
   private val channel by instance<NotificationChannel>()
   private val clipboardMgr by instance<ClipboardManager>()
   private val notificationManager by instance<NotificationManager>()
+  private val clipboardDao by instance<ClipBoardDao>()
 
   /**
    * create notification chanel for android 26+
@@ -45,7 +49,11 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
   override fun onCreate() {
     super.onCreate()
     clipboardMgr.addPrimaryClipChangedListener(this)
-    startForeground(notificationId, getNotification(""))
+
+    launch {
+      val lastCopy = clipboardDao.getLast()
+      startForeground(notificationId, getNotification(lastCopy?.text))
+    }
   }
 
   private fun getNotification(text: CharSequence?): Notification {
@@ -62,10 +70,16 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
 
   override fun onPrimaryClipChanged() {
     val text = clipboardMgr.primaryClip?.getItemAt(0)?.text
-    Log.w("tag", "onChange: $text")
+    // ensure do not repeat
     if (!text.isNullOrBlank() && previousText != text) {
       previousText = text
       notificationManager.notify(notificationId, getNotification(text))
+
+      // save into db
+      launch {
+        clipboardDao.insert(Clipboard(previousText.toString()))
+      }
+      Log.w("tag", "onChange: $text")
     }
   }
 

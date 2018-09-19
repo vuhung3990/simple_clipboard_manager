@@ -8,6 +8,6 @@ import org.kodein.di.android.androidModule
 class MyApplication : Application(), KodeinAware {
   override val kodein = Kodein.lazy {
     import(androidModule(this@MyApplication))
-    import(ClipboadManagerModule(this@MyApplication).scmModule)
+    import(AppModules(this@MyApplication).scmModule)
   }
 }
