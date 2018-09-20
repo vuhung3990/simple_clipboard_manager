@@ -57,6 +57,11 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
     this.itemClickListener = itemClickListener
   }
 
+  fun insertItemAtTop(clipboard: Clipboard) {
+    dataList.add(0, clipboard)
+    notifyItemInserted(0)
+  }
+
   inner class ClipboardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     val text: TextView by lazy { itemView.findViewById(android.R.id.text1) as TextView }
 

@@ -148,7 +148,17 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
       .setView(input)
       .setNegativeButton(R.string.cancel, null)
       .setPositiveButton(R.string.ok) { _, _ ->
+        val text = input.text.toString()
+        val clipboard = Clipboard(text)
 
+        // add to top of list
+        clipboardAdapter.insertItemAtTop(clipboard)
+        list.smoothScrollToPosition(0)
+
+        // save to db
+        launch {
+          clipboardDao.insert(clipboard)
+        }
       }
       .show()
   }
