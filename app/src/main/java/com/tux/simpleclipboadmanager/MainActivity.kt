@@ -8,12 +8,17 @@ import android.os.Bundle
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.DividerItemDecoration
+import android.support.v7.widget.LinearLayoutManager
 import android.text.InputType
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
+import com.tux.simpleclipboadmanager.db.ClipBoardDao
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_main.*
+import kotlinx.coroutines.experimental.launch
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.android.closestKodein
@@ -25,6 +30,8 @@ class MainActivity : AppCompatActivity(), KodeinAware {
   private var isTracking = true
   private val actionCopy by instance<String>("actionCopy")
   private val actionStop by instance<String>("actionStop")
+  private val clipboardAdapter by instance<ClipboardAdapter>()
+  private val clipboardDao by instance<ClipBoardDao>()
 
   private val trackingReceiver by lazy {
     object : BroadcastReceiver() {
@@ -44,6 +51,11 @@ class MainActivity : AppCompatActivity(), KodeinAware {
     super.onResume()
     // update when isTracking = false, see broadcast
     if (!isTracking) item.setIcon(R.drawable.outline_visibility_24)
+
+    launch {
+      val clipboards = clipboardDao.getAll()
+      clipboardAdapter.update(clipboards)
+    }
   }
 
   override fun onDestroy() {
@@ -68,7 +80,14 @@ class MainActivity : AppCompatActivity(), KodeinAware {
     }
     startService(Intent(this, ClipboardService::class.java))
     LocalBroadcastManager.getInstance(this)
-      .registerReceiver(trackingReceiver, trackingIntentFilter)
+        .registerReceiver(trackingReceiver, trackingIntentFilter)
+
+    list.apply {
+      setHasFixedSize(true)
+      layoutManager = LinearLayoutManager(this@MainActivity)
+      adapter = clipboardAdapter
+      addItemDecoration(DividerItemDecoration(this@MainActivity, DividerItemDecoration.VERTICAL))
+    }
   }
 
   private fun addNewClipboard() {
@@ -78,13 +97,13 @@ class MainActivity : AppCompatActivity(), KodeinAware {
     }
 
     AlertDialog.Builder(this)
-      .setTitle(R.string.title_add_new_clipboard)
-      .setView(input)
-      .setNegativeButton(R.string.cancel, null)
-      .setPositiveButton(R.string.ok) { _, _ ->
+        .setTitle(R.string.title_add_new_clipboard)
+        .setView(input)
+        .setNegativeButton(R.string.cancel, null)
+        .setPositiveButton(R.string.ok) { _, _ ->
 
-      }
-      .show()
+        }
+        .show()
   }
 
   lateinit var item: MenuItem

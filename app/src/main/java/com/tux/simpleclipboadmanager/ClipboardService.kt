@@ -8,6 +8,7 @@ import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.support.annotation.RequiresApi
 import android.support.v4.app.NotificationCompat
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
@@ -28,7 +29,6 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
   private val actionStop by instance<String>("actionStop")
 
   private val notificationId by instance<Int>("notificationId")
-  private val channel by instance<NotificationChannel>()
   private val clipboardMgr by instance<ClipboardManager>()
   private val notificationManager by instance<NotificationManager>()
   private val clipboardDao by instance<ClipBoardDao>()
@@ -42,8 +42,22 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       // Register the channel with the system; you can't change the importance
       // or other notification behaviors after this
+      val chanelId by instance<String>("chanelId")
+      val chanelName by instance<String>("chanelName")
+      val channel = createNotificationChannel(chanelId, chanelName)
       notificationManager.createNotificationChannel(channel)
     }
+  }
+
+  @RequiresApi(Build.VERSION_CODES.O)
+  private fun createNotificationChannel(chanelId: String, chanelName: String): NotificationChannel {
+    return NotificationChannel(chanelId, chanelName, NotificationManager.IMPORTANCE_LOW)
+        .apply {
+          setShowBadge(false)
+          lockscreenVisibility = Notification.VISIBILITY_SECRET
+          enableVibration(false)
+          enableLights(false)
+        }
   }
 
   override fun onCreate() {
