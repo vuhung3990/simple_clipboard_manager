@@ -5,17 +5,22 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.SearchView
+import android.support.v7.widget.helper.ItemTouchHelper
 import android.text.InputType
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
 import com.tux.simpleclipboadmanager.db.ClipBoardDao
+import com.tux.simpleclipboadmanager.db.Clipboard
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.coroutines.experimental.launch
@@ -24,7 +29,7 @@ import org.kodein.di.KodeinAware
 import org.kodein.di.android.closestKodein
 import org.kodein.di.generic.instance
 
-class MainActivity : AppCompatActivity(), KodeinAware {
+class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextListener {
   override val kodein: Kodein by closestKodein()
 
   private var isTracking = true
@@ -88,6 +93,28 @@ class MainActivity : AppCompatActivity(), KodeinAware {
       adapter = clipboardAdapter
       addItemDecoration(DividerItemDecoration(this@MainActivity, DividerItemDecoration.VERTICAL))
     }
+
+    val swipeHandler = object : SwipeToDeleteCallback(this) {
+      override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+        val lastPosition: Int = viewHolder.adapterPosition
+        val lastItem: Clipboard = clipboardAdapter.getItemAt(lastPosition)
+
+        clipboardAdapter.removeItemAt(lastPosition)
+        launch {
+          clipboardDao.deleteOne(lastItem)
+        }
+
+        Snackbar.make(container, R.string.item_deleted, Snackbar.LENGTH_LONG)
+          .setAction(R.string.undo) {
+            launch {
+              clipboardDao.insert(lastItem)
+            }
+            clipboardAdapter.restoreItem(lastPosition, lastItem)
+          }.show()
+      }
+    }
+    val itemTouchHelper = ItemTouchHelper(swipeHandler)
+    itemTouchHelper.attachToRecyclerView(list)
   }
 
   private fun addNewClipboard() {
@@ -112,6 +139,8 @@ class MainActivity : AppCompatActivity(), KodeinAware {
     menuInflater.inflate(R.menu.menu_main, menu)
 
     item = menu.findItem(R.id.action_tracking)
+    val searchView = menu.findItem(R.id.action_search).actionView as SearchView
+    searchView.setOnQueryTextListener(this)
     return true
   }
 
@@ -136,5 +165,14 @@ class MainActivity : AppCompatActivity(), KodeinAware {
     isTracking = !isTracking
 
     item.setIcon(trackingIcon)
+  }
+
+  override fun onQueryTextSubmit(query: String?): Boolean {
+    return false
+  }
+
+  override fun onQueryTextChange(newText: String?): Boolean {
+    Log.d("aaaaa", newText)
+    return false
   }
 }

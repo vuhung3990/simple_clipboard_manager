@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import com.tux.simpleclipboadmanager.db.Clipboard
 
-class ClipboardAdapter(val layoutInflater: LayoutInflater) :
+class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
   RecyclerView.Adapter<ClipboardAdapter.ClipboardViewHolder>() {
 
   private val dataList = mutableListOf<Clipboard>()
@@ -39,6 +39,13 @@ class ClipboardAdapter(val layoutInflater: LayoutInflater) :
   override fun onBindViewHolder(holder: ClipboardViewHolder, position: Int) {
     val clipboard = dataList[position]
     holder.bind(clipboard)
+  }
+
+  fun getItemAt(position: Int): Clipboard = dataList[position]
+
+  fun restoreItem(position: Int, item: Clipboard) {
+    dataList.add(position, item)
+    notifyItemInserted(position)
   }
 
   inner class ClipboardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

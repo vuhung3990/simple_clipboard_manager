@@ -18,7 +18,7 @@ interface ClipBoardDao {
   fun getLast(): Clipboard?
 
   @WorkerThread
-  @Query("SELECT * FROM clipboard LIMIT 100")
+  @Query("SELECT * FROM clipboard ORDER BY id DESC LIMIT 100")
   fun getLast100(): List<Clipboard>?
 
   @WorkerThread

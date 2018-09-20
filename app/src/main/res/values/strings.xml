@@ -7,4 +7,6 @@
   <string name="hint_add_new_clipboard">type text to add into clipboard</string>
   <string name="search">Search</string>
   <string name="notification_title">Most recent clipboard</string>
+  <string name="item_deleted">1 item deleted</string>
+  <string name="undo">Undo</string>
 </resources>
