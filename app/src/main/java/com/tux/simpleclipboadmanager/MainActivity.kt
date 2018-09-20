@@ -1,9 +1,6 @@
 package com.tux.simpleclipboadmanager
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.content.LocalBroadcastManager
@@ -29,7 +26,9 @@ import org.kodein.di.KodeinAware
 import org.kodein.di.android.closestKodein
 import org.kodein.di.generic.instance
 
-class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextListener {
+class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextListener,
+  ClipboardAdapter.OnItemClickListener {
+
   override val kodein: Kodein by closestKodein()
 
   private var isTracking = true
@@ -37,6 +36,8 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
   private val actionStop by instance<String>("actionStop")
   private val clipboardAdapter by instance<ClipboardAdapter>()
   private val clipboardDao by instance<ClipBoardDao>()
+  private val clipboardMgr by instance<ClipboardManager>()
+  private val clipDataLabel by instance<String>("clipDataLabel")
 
   private val trackingReceiver by lazy {
     object : BroadcastReceiver() {
@@ -52,10 +53,21 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
     }
   }
 
+  /**
+   * copy data when click item
+   */
+  override fun onClickedItem(position: Int) {
+    val clipboard = clipboardAdapter.getItemAt(position)
+    clipboardMgr.primaryClip = ClipData.newPlainText(clipDataLabel, clipboard.text)
+
+    Snackbar.make(container, clipDataLabel, Snackbar.LENGTH_LONG).show()
+  }
+
   override fun onResume() {
     super.onResume()
     // update when isTracking = false, see broadcast
-    if (!isTracking) item.setIcon(R.drawable.outline_visibility_24)
+    item?.setIcon(
+      if (isTracking) R.drawable.outline_visibility_off_24 else R.drawable.outline_visibility_24)
 
     launch {
       val clipboards = clipboardDao.getLast100()
@@ -94,21 +106,29 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
       addItemDecoration(DividerItemDecoration(this@MainActivity, DividerItemDecoration.VERTICAL))
     }
 
+    // set item click
+    clipboardAdapter.setItemClickListener(this)
+
+    // setup swipe to delete
     val swipeHandler = object : SwipeToDeleteCallback(this) {
       override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
         val lastPosition: Int = viewHolder.adapterPosition
         val lastItem: Clipboard = clipboardAdapter.getItemAt(lastPosition)
 
+        // update ui
         clipboardAdapter.removeItemAt(lastPosition)
+        // delete in db
         launch {
           clipboardDao.deleteOne(lastItem)
         }
 
         Snackbar.make(container, R.string.item_deleted, Snackbar.LENGTH_LONG)
           .setAction(R.string.undo) {
+            // restore in db
             launch {
               clipboardDao.insert(lastItem)
             }
+            // restore view
             clipboardAdapter.restoreItem(lastPosition, lastItem)
           }.show()
       }
@@ -133,7 +153,7 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
       .show()
   }
 
-  lateinit var item: MenuItem
+  private var item: MenuItem? = null
   override fun onCreateOptionsMenu(menu: Menu): Boolean {
     // Inflate the menu; this adds items to the action bar if it is present.
     menuInflater.inflate(R.menu.menu_main, menu)

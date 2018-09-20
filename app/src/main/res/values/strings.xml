@@ -9,4 +9,5 @@
   <string name="notification_title">Most recent clipboard</string>
   <string name="item_deleted">1 item deleted</string>
   <string name="undo">Undo</string>
+  <string name="clip_data_label">Copied text</string>
 </resources>

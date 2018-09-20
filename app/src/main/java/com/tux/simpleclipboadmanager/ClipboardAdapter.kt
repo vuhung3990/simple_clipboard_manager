@@ -10,7 +10,12 @@ import com.tux.simpleclipboadmanager.db.Clipboard
 class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
   RecyclerView.Adapter<ClipboardAdapter.ClipboardViewHolder>() {
 
+  private var itemClickListener: OnItemClickListener? = null
   private val dataList = mutableListOf<Clipboard>()
+
+  interface OnItemClickListener {
+    fun onClickedItem(position: Int)
+  }
 
   /**
    * remove item at position
@@ -24,7 +29,7 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
   fun update(data: List<Clipboard>?) {
     data?.run {
       dataList.clear()
-      dataList.addAll(data.asReversed())
+      dataList.addAll(this)
       notifyDataSetChanged()
     }
   }
@@ -38,7 +43,7 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
 
   override fun onBindViewHolder(holder: ClipboardViewHolder, position: Int) {
     val clipboard = dataList[position]
-    holder.bind(clipboard)
+    holder.bind(clipboard, itemClickListener)
   }
 
   fun getItemAt(position: Int): Clipboard = dataList[position]
@@ -48,11 +53,19 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
     notifyItemInserted(position)
   }
 
+  fun setItemClickListener(itemClickListener: OnItemClickListener) {
+    this.itemClickListener = itemClickListener
+  }
+
   inner class ClipboardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     val text: TextView by lazy { itemView.findViewById(android.R.id.text1) as TextView }
 
-    fun bind(clipboard: Clipboard) {
+    fun bind(
+      clipboard: Clipboard, itemClickListener: OnItemClickListener?) {
       text.text = clipboard.text
+      itemView.setOnClickListener {
+        itemClickListener?.onClickedItem(adapterPosition)
+      }
     }
   }
 }

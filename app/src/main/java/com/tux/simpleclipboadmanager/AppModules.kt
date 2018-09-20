@@ -74,6 +74,8 @@ class AppModules(private val appContext: Context) {
     bind<ClipBoardDao>() with singleton { getClipboardDao(instance()) }
 
     bind<ClipboardAdapter>() with singleton { ClipboardAdapter(instance()) }
+
+    bind<String>("clipDataLabel") with singleton { appContext.getString(R.string.clip_data_label) }
   }
 
   private fun getClipboardDao(instance: ClipboardDatabase): ClipBoardDao = instance.clipBoardDao()
