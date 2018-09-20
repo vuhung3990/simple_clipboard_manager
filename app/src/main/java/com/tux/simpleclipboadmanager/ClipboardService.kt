@@ -52,12 +52,12 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
   @RequiresApi(Build.VERSION_CODES.O)
   private fun createNotificationChannel(chanelId: String, chanelName: String): NotificationChannel {
     return NotificationChannel(chanelId, chanelName, NotificationManager.IMPORTANCE_LOW)
-        .apply {
-          setShowBadge(false)
-          lockscreenVisibility = Notification.VISIBILITY_SECRET
-          enableVibration(false)
-          enableLights(false)
-        }
+      .apply {
+        setShowBadge(false)
+        lockscreenVisibility = Notification.VISIBILITY_SECRET
+        enableVibration(false)
+        enableLights(false)
+      }
   }
 
   override fun onCreate() {

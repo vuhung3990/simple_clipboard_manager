@@ -8,7 +8,7 @@ import android.widget.TextView
 import com.tux.simpleclipboadmanager.db.Clipboard
 
 class ClipboardAdapter(val layoutInflater: LayoutInflater) :
-    RecyclerView.Adapter<ClipboardAdapter.ClipboardViewHolder>() {
+  RecyclerView.Adapter<ClipboardAdapter.ClipboardViewHolder>() {
 
   private val dataList = mutableListOf<Clipboard>()
 

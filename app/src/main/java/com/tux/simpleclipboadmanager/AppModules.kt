@@ -27,48 +27,48 @@ class AppModules(private val appContext: Context) {
 
     bind<PendingIntent>("pIntentCopy") with singleton {
       PendingIntent.getService(appContext, 0,
-          Intent(appContext, ClipboardService::class.java).apply {
-            action = instance("actionCopy")
-          }, 0)
+        Intent(appContext, ClipboardService::class.java).apply {
+          action = instance("actionCopy")
+        }, 0)
     }
 
     bind<PendingIntent>("pIntentStack1") with singleton {
       PendingIntent.getService(appContext, 0,
-          Intent(appContext, ClipboardService::class.java).apply {
-            action = instance("actionStack1")
-          }, 0)
+        Intent(appContext, ClipboardService::class.java).apply {
+          action = instance("actionStack1")
+        }, 0)
     }
 
     bind<PendingIntent>("pIntentStack2") with singleton {
       PendingIntent.getService(appContext, 0,
-          Intent(appContext, ClipboardService::class.java).apply {
-            action = instance("actionStack2")
-          }, 0)
+        Intent(appContext, ClipboardService::class.java).apply {
+          action = instance("actionStack2")
+        }, 0)
     }
 
     bind<PendingIntent>("pIntentStop") with singleton {
       PendingIntent.getService(appContext, 0,
-          Intent(appContext, ClipboardService::class.java).apply {
-            action = instance("actionStop")
-          }, 0)
+        Intent(appContext, ClipboardService::class.java).apply {
+          action = instance("actionStop")
+        }, 0)
     }
 
     bind<Notification>() with factory { bigTextStyle: NotificationCompat.BigTextStyle ->
       NotificationCompat.Builder(appContext, instance("chanelId"))
-          .setSmallIcon(R.mipmap.ic_launcher)
-          .setStyle(bigTextStyle)
-          .setContentIntent(instance("pIntentCopy"))
-          .setContentTitle(appContext.getString(R.string.notification_title))
-          .addAction(R.drawable.outline_looks_one_24, "Stack 1", instance("pIntentStack1"))
-          .addAction(R.drawable.outline_looks_two_24, "Stack 2", instance("pIntentStack2"))
-          .addAction(R.drawable.outline_visibility_off_24, "Stop Tracking", instance("pIntentStop"))
-          .build()
+        .setSmallIcon(R.mipmap.ic_launcher)
+        .setStyle(bigTextStyle)
+        .setContentIntent(instance("pIntentCopy"))
+        .setContentTitle(appContext.getString(R.string.notification_title))
+        .addAction(R.drawable.outline_looks_one_24, "Stack 1", instance("pIntentStack1"))
+        .addAction(R.drawable.outline_looks_two_24, "Stack 2", instance("pIntentStack2"))
+        .addAction(R.drawable.outline_visibility_off_24, "Stop Tracking", instance("pIntentStop"))
+        .build()
     }
 
     bind<ClipboardDatabase>() with eagerSingleton {
       Room.databaseBuilder(appContext, ClipboardDatabase::class.java, "scm")
-          .fallbackToDestructiveMigration()
-          .build()
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     bind<ClipBoardDao>() with singleton { getClipboardDao(instance()) }

@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity(), KodeinAware {
     }
     startService(Intent(this, ClipboardService::class.java))
     LocalBroadcastManager.getInstance(this)
-        .registerReceiver(trackingReceiver, trackingIntentFilter)
+      .registerReceiver(trackingReceiver, trackingIntentFilter)
 
     list.apply {
       setHasFixedSize(true)
@@ -97,13 +97,13 @@ class MainActivity : AppCompatActivity(), KodeinAware {
     }
 
     AlertDialog.Builder(this)
-        .setTitle(R.string.title_add_new_clipboard)
-        .setView(input)
-        .setNegativeButton(R.string.cancel, null)
-        .setPositiveButton(R.string.ok) { _, _ ->
+      .setTitle(R.string.title_add_new_clipboard)
+      .setView(input)
+      .setNegativeButton(R.string.cancel, null)
+      .setPositiveButton(R.string.ok) { _, _ ->
 
-        }
-        .show()
+      }
+      .show()
   }
 
   lateinit var item: MenuItem

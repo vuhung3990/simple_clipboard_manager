@@ -14,14 +14,15 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityTest {
-    @Rule
-    @JvmField
-    public var mActivityRule = ActivityTestRule(MainActivity::class.java)
 
-    @Test
-    fun toggleTracking() {
-        onView(withId(R.id.action_tracking))
-            .check(matches(ViewMatchers.isDisplayed()))
-            .check(matches(DrawableMatcher.withDrawable(R.drawable.outline_visibility_24)))
-    }
+  @Rule
+  @JvmField
+  public var mActivityRule = ActivityTestRule(MainActivity::class.java)
+
+  @Test
+  fun toggleTracking() {
+    onView(withId(R.id.action_tracking))
+      .check(matches(ViewMatchers.isDisplayed()))
+      .check(matches(DrawableMatcher.withDrawable(R.drawable.outline_visibility_24)))
+  }
 }

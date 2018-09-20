@@ -18,8 +18,8 @@ public class Clipboard {
   @Override
   public String toString() {
     return "Clipboard{" +
-        "id=" + id +
-        ", text='" + text + '\'' +
-        '}';
+      "id=" + id +
+      ", text='" + text + '\'' +
+      '}';
   }
 }
