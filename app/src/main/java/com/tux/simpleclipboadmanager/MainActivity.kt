@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity(), KodeinAware {
     if (!isTracking) item.setIcon(R.drawable.outline_visibility_24)
 
     launch {
-      val clipboards = clipboardDao.getAll()
+      val clipboards = clipboardDao.getLast100()
       clipboardAdapter.update(clipboards)
     }
   }

@@ -18,8 +18,8 @@ interface ClipBoardDao {
   fun getLast(): Clipboard?
 
   @WorkerThread
-  @Query("SELECT * from clipboard")
-  fun getAll(): List<Clipboard>?
+  @Query("SELECT * FROM clipboard LIMIT 100")
+  fun getLast100(): List<Clipboard>?
 
   @WorkerThread
   @Delete
