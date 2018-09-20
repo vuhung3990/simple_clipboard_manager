@@ -20,6 +20,7 @@ import com.tux.simpleclipboadmanager.db.ClipBoardDao
 import com.tux.simpleclipboadmanager.db.Clipboard
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.launch
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
@@ -63,6 +64,36 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
     Snackbar.make(container, clipDataLabel, Snackbar.LENGTH_LONG).show()
   }
 
+  /**
+   * set favourite
+   */
+  override fun onLongClickedItem(position: Int) {
+    val clipboard = clipboardAdapter.getItemAt(position)
+
+    AlertDialog.Builder(this)
+      .setMessage(R.string.select_stack)
+      .setNegativeButton(R.string.stack1) { _, _ ->
+        selectStack(Clipboard.STACK_1, position, clipboard)
+      }
+      .setNeutralButton(R.string.cancel, null)
+      .setPositiveButton(R.string.stack2) { _, _ ->
+        selectStack(Clipboard.STACK_2, position, clipboard)
+      }
+      .show()
+  }
+
+  private fun selectStack(stack: Int, position: Int, clipboard: Clipboard) {
+    clipboard.stack = stack
+    // get changed list to update db
+    val changedList = clipboardAdapter.updateAt(position, clipboard)
+    // remember add item change
+    changedList.add(clipboard)
+    // save to db
+    launch {
+      clipboardDao.update(changedList)
+    }
+  }
+
   override fun onResume() {
     super.onResume()
     // update when isTracking = false, see broadcast
@@ -70,7 +101,7 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
       if (isTracking) R.drawable.outline_visibility_off_24 else R.drawable.outline_visibility_24)
 
     launch {
-      val clipboards = clipboardDao.getLast100()
+      val clipboards = async { clipboardDao.getLast100() }.await()
       clipboardAdapter.update(clipboards)
     }
   }

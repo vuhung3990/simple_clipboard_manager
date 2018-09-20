@@ -1,5 +1,6 @@
 package com.tux.simpleclipboadmanager
 
+import android.support.v7.widget.AppCompatImageView
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +16,8 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
 
   interface OnItemClickListener {
     fun onClickedItem(position: Int)
+
+    fun onLongClickedItem(position: Int)
   }
 
   /**
@@ -35,7 +38,7 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
   }
 
   override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ClipboardViewHolder {
-    val view = layoutInflater.inflate(android.R.layout.simple_list_item_1, parent, false)
+    val view = layoutInflater.inflate(R.layout.item, parent, false)
     return ClipboardViewHolder(view)
   }
 
@@ -62,8 +65,29 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
     notifyItemInserted(0)
   }
 
+  fun updateAt(position: Int, clipboard: Clipboard): MutableList<Clipboard> {
+    val changedList = mutableListOf<Clipboard>()
+    // clear all item with same stack = unset
+    val iterator = dataList.listIterator()
+    while (iterator.hasNext()) {
+      val item = iterator.next()
+      if (clipboard != item && clipboard.stack == item.stack) item.stack = Clipboard.STACK_UNSET
+      iterator.set(item)
+
+      changedList.add(item)
+    }
+
+    dataList[position] = clipboard
+    notifyDataSetChanged()
+
+    return changedList
+  }
+
   inner class ClipboardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    val text: TextView by lazy { itemView.findViewById(android.R.id.text1) as TextView }
+    private val text: TextView by lazy { itemView.findViewById(android.R.id.text1) as TextView }
+    private val stack: AppCompatImageView by lazy {
+      itemView.findViewById(android.R.id.icon1) as AppCompatImageView
+    }
 
     fun bind(
       clipboard: Clipboard, itemClickListener: OnItemClickListener?) {
@@ -71,6 +95,18 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
       itemView.setOnClickListener {
         itemClickListener?.onClickedItem(adapterPosition)
       }
+      itemView.setOnLongClickListener {
+        itemClickListener?.onLongClickedItem(adapterPosition)
+        return@setOnLongClickListener true
+      }
+
+      val stackDrawableRes = when (clipboard.stack) {
+        Clipboard.STACK_1 -> R.drawable.outline_looks_one_24
+        Clipboard.STACK_2 -> R.drawable.outline_looks_two_24
+        else -> Clipboard.STACK_UNSET
+      }
+
+      stack.setImageResource(stackDrawableRes)
     }
   }
 }

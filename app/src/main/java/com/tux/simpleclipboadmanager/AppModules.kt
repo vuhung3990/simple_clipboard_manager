@@ -59,9 +59,13 @@ class AppModules(private val appContext: Context) {
         .setStyle(bigTextStyle)
         .setContentIntent(instance("pIntentCopy"))
         .setContentTitle(appContext.getString(R.string.notification_title))
-        .addAction(R.drawable.outline_looks_one_24, "Stack 1", instance("pIntentStack1"))
-        .addAction(R.drawable.outline_looks_two_24, "Stack 2", instance("pIntentStack2"))
-        .addAction(R.drawable.outline_visibility_off_24, "Stop Tracking", instance("pIntentStop"))
+        .addAction(R.drawable.outline_looks_one_24, appContext.getString(R.string.stack1),
+          instance("pIntentStack1"))
+        .addAction(R.drawable.outline_looks_two_24, appContext.getString(R.string.stack2),
+          instance("pIntentStack2"))
+        .addAction(R.drawable.outline_visibility_off_24,
+          appContext.getString(R.string.stop_tracking),
+          instance("pIntentStop"))
         .build()
     }
 

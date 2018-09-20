@@ -10,4 +10,8 @@
   <string name="item_deleted">1 item deleted</string>
   <string name="undo">Undo</string>
   <string name="clip_data_label">Copied text</string>
+  <string name="select_stack">Please select stack to save.</string>
+  <string name="stack1">Stack 1</string>
+  <string name="stack2">Stack 2</string>
+  <string name="stop_tracking">Stop tracking</string>
 </resources>
