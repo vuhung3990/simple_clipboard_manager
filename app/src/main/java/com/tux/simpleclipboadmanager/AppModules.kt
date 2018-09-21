@@ -55,7 +55,7 @@ class AppModules(private val appContext: Context) {
 
     bind<Notification>() with factory { bigTextStyle: NotificationCompat.BigTextStyle ->
       NotificationCompat.Builder(appContext, instance("chanelId"))
-        .setSmallIcon(R.mipmap.ic_launcher)
+        .setSmallIcon(R.drawable.ic_notification)
         .setStyle(bigTextStyle)
         .setContentIntent(instance("pIntentCopy"))
         .setContentTitle(appContext.getString(R.string.notification_title))
