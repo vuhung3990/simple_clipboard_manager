@@ -8,6 +8,7 @@ import android.content.Intent
 import android.support.v4.app.NotificationCompat
 import com.tux.simpleclipboadmanager.db.ClipBoardDao
 import com.tux.simpleclipboadmanager.db.ClipboardDatabase
+import io.reactivex.disposables.CompositeDisposable
 import org.kodein.di.Kodein
 import org.kodein.di.generic.*
 
@@ -56,6 +57,7 @@ class AppModules(private val appContext: Context) {
     bind<Notification>() with factory { bigTextStyle: NotificationCompat.BigTextStyle ->
       NotificationCompat.Builder(appContext, instance("chanelId"))
         .setSmallIcon(R.drawable.ic_notification)
+        .setAutoCancel(true)
         .setStyle(bigTextStyle)
         .setContentIntent(instance("pIntentCopy"))
         .setContentTitle(appContext.getString(R.string.notification_title))
@@ -80,6 +82,8 @@ class AppModules(private val appContext: Context) {
     bind<ClipboardAdapter>() with singleton { ClipboardAdapter(instance()) }
 
     bind<String>("clipDataLabel") with singleton { appContext.getString(R.string.clip_data_label) }
+
+    bind<CompositeDisposable>() with provider { CompositeDisposable() }
   }
 
   private fun getClipboardDao(instance: ClipboardDatabase): ClipBoardDao = instance.clipBoardDao()

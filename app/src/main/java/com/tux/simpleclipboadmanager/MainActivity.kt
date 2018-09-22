@@ -9,46 +9,44 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.SearchView
 import android.support.v7.widget.helper.ItemTouchHelper
 import android.text.InputType
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
 import com.tux.simpleclipboadmanager.db.ClipBoardDao
 import com.tux.simpleclipboadmanager.db.Clipboard
+import io.reactivex.Maybe
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.launch
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.android.closestKodein
 import org.kodein.di.generic.instance
 
-class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextListener,
+class MainActivity : AppCompatActivity(), KodeinAware,
   ClipboardAdapter.OnItemClickListener {
 
   override val kodein: Kodein by closestKodein()
 
   private var isTracking = true
-  private val actionCopy by instance<String>("actionCopy")
   private val actionStop by instance<String>("actionStop")
   private val clipboardAdapter by instance<ClipboardAdapter>()
   private val clipboardDao by instance<ClipBoardDao>()
   private val clipboardMgr by instance<ClipboardManager>()
   private val clipDataLabel by instance<String>("clipDataLabel")
+  private val compositeDisposable by instance<CompositeDisposable>()
 
   private val trackingReceiver by lazy {
     object : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        when (action) {
-          actionCopy -> isTracking = false
-          else -> {
-            Log.w("debug", "copied: ${intent.getStringExtra("text")}")
-          }
+        if (action == actionStop) {
+          isTracking = false
+          item?.setIcon(R.drawable.outline_visibility_24)
         }
       }
     }
@@ -89,9 +87,11 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
     // remember add item change
     changedList.add(clipboard)
     // save to db
-    launch {
-      clipboardDao.update(changedList)
-    }
+    val saveClipboard = Maybe.fromCallable { clipboardDao.update(changedList) }
+      .subscribeOn(Schedulers.io())
+      .subscribe()
+
+    compositeDisposable.add(saveClipboard)
   }
 
   override fun onResume() {
@@ -100,10 +100,19 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
     item?.setIcon(
       if (isTracking) R.drawable.outline_visibility_off_24 else R.drawable.outline_visibility_24)
 
-    launch {
-      val clipboards = async { clipboardDao.getLast100() }.await()
-      clipboardAdapter.update(clipboards)
-    }
+    val updateFromDb = clipboardDao.getLast100()
+      .subscribeOn(Schedulers.io())
+      .observeOn(AndroidSchedulers.mainThread())
+      .subscribe {
+        clipboardAdapter.update(it)
+      }
+    compositeDisposable.add(updateFromDb)
+  }
+
+  override fun onPause() {
+    super.onPause()
+    // release all disposes
+    compositeDisposable.dispose()
   }
 
   override fun onDestroy() {
@@ -113,7 +122,6 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
 
   private val trackingIntentFilter: IntentFilter by lazy {
     IntentFilter().apply {
-      addAction(actionCopy)
       addAction(actionStop)
     }
   }
@@ -149,16 +157,19 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
         // update ui
         clipboardAdapter.removeItemAt(lastPosition)
         // delete in db
-        launch {
-          clipboardDao.deleteOne(lastItem)
-        }
+        val deleteClipboard = Maybe.fromCallable { clipboardDao.deleteOne(lastItem) }
+          .subscribeOn(Schedulers.io())
+          .subscribe()
+        compositeDisposable.add(deleteClipboard)
 
         Snackbar.make(container, R.string.item_deleted, Snackbar.LENGTH_LONG)
           .setAction(R.string.undo) {
             // restore in db
-            launch {
-              clipboardDao.insert(lastItem)
-            }
+            val restoreClipboard = Maybe.fromCallable { clipboardDao.insert(lastItem) }
+              .subscribeOn(Schedulers.io())
+              .subscribe()
+            compositeDisposable.add(restoreClipboard)
+
             // restore view
             clipboardAdapter.restoreItem(lastPosition, lastItem)
           }.show()
@@ -187,9 +198,10 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
         list.smoothScrollToPosition(0)
 
         // save to db
-        launch {
-          clipboardDao.insert(clipboard)
-        }
+        val addNewClipboard = Maybe.fromCallable { clipboardDao.insert(clipboard) }
+          .subscribeOn(Schedulers.io())
+          .subscribe()
+        compositeDisposable.add(addNewClipboard)
       }
       .show()
   }
@@ -200,8 +212,6 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
     menuInflater.inflate(R.menu.menu_main, menu)
 
     item = menu.findItem(R.id.action_tracking)
-    val searchView = menu.findItem(R.id.action_search).actionView as SearchView
-    searchView.setOnQueryTextListener(this)
     return true
   }
 
@@ -226,14 +236,5 @@ class MainActivity : AppCompatActivity(), KodeinAware, SearchView.OnQueryTextLis
     isTracking = !isTracking
 
     item.setIcon(trackingIcon)
-  }
-
-  override fun onQueryTextSubmit(query: String?): Boolean {
-    return false
-  }
-
-  override fun onQueryTextChange(newText: String?): Boolean {
-    Log.d("aaaaa", newText)
-    return false
   }
 }

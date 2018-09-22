@@ -12,7 +12,10 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
   RecyclerView.Adapter<ClipboardAdapter.ClipboardViewHolder>() {
 
   private var itemClickListener: OnItemClickListener? = null
-  private val dataList = mutableListOf<Clipboard>()
+  /**
+   * for display list
+   */
+  private var dataList = mutableListOf<Clipboard>()
 
   interface OnItemClickListener {
     fun onClickedItem(position: Int)
@@ -25,6 +28,7 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
    */
   fun removeItemAt(position: Int) {
     dataList.removeAt(position)
+
     notifyItemRemoved(position)
   }
 

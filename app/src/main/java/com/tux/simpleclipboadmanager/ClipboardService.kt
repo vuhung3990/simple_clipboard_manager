@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Build
@@ -12,9 +13,13 @@ import android.support.annotation.RequiresApi
 import android.support.v4.app.NotificationCompat
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
+import android.widget.Toast
 import com.tux.simpleclipboadmanager.db.ClipBoardDao
 import com.tux.simpleclipboadmanager.db.Clipboard
-import kotlinx.coroutines.experimental.launch
+import io.reactivex.Maybe
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.android.closestKodein
@@ -32,6 +37,8 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
   private val clipboardMgr by instance<ClipboardManager>()
   private val notificationManager by instance<NotificationManager>()
   private val clipboardDao by instance<ClipBoardDao>()
+  private val clipDataLabel by instance<String>("clipDataLabel")
+  private val compositeDisposable by instance<CompositeDisposable>()
 
   /**
    * create notification chanel for android 26+
@@ -64,10 +71,15 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
     super.onCreate()
     clipboardMgr.addPrimaryClipChangedListener(this)
 
-    launch {
-      val lastCopy = clipboardDao.getLast()
-      startForeground(notificationId, getNotification(lastCopy?.text))
-    }
+    // get last text from db then show notification
+    val lastCopy = clipboardDao.getLast()
+      .subscribeOn(Schedulers.io())
+      .observeOn(AndroidSchedulers.mainThread())
+      .subscribe(
+        { startForeground(notificationId, getNotification(it.text)) },
+        { startForeground(notificationId, getNotification(null)) }
+      )
+    compositeDisposable.add(lastCopy)
   }
 
   private fun getNotification(text: CharSequence?): Notification {
@@ -90,9 +102,12 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
       notificationManager.notify(notificationId, getNotification(text))
 
       // save into db
-      launch {
+      val insertNewClipboard = Maybe.fromCallable {
         clipboardDao.insert(Clipboard(previousText.toString()))
       }
+        .subscribeOn(Schedulers.io())
+        .subscribe()
+      compositeDisposable.add(insertNewClipboard)
       Log.w("tag", "onChange: $text")
     }
   }
@@ -101,17 +116,34 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
     intent?.action?.run {
       when (this) {
         actionStack1 -> {
-          Log.w("debug", "STACK1")
+          val stack1 = clipboardDao.getStack(Clipboard.STACK_1)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+              copyText(it.text)
+            }
+          compositeDisposable.add(stack1)
         }
         actionStack2 -> {
           Log.w("debug", "STACK2")
+          val stack2 = clipboardDao.getStack(Clipboard.STACK_2)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+              copyText(it.text)
+            }
+          compositeDisposable.add(stack2)
         }
         actionCopy -> {
           Log.w("debug", "COPY")
-          val intentCopy = Intent(actionCopy).apply {
-            putExtra("text", "fuck you guys")
-          }
-          LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intentCopy)
+          val lastRecent = clipboardDao.getLast()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+              { copyText(it.text) },
+              {Toast.makeText(this@ClipboardService, R.string.something_went_wrong, Toast.LENGTH_LONG).show()}
+            )
+          compositeDisposable.add(lastRecent)
         }
         else -> {
           Log.w("debug", "stop")
@@ -123,12 +155,20 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
     return START_STICKY
   }
 
+  private fun copyText(text: String?) {
+    text?.run {
+      clipboardMgr.primaryClip = ClipData.newPlainText(clipDataLabel, text)
+      Toast.makeText(this@ClipboardService, clipDataLabel, Toast.LENGTH_LONG).show()
+    }
+  }
+
   override fun onBind(intent: Intent?): IBinder? {
     return null
   }
 
   override fun onDestroy() {
     LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(Intent(actionStop))
+    compositeDisposable.dispose()
     Log.d("debug", "stop")
     clipboardMgr.removePrimaryClipChangedListener(this)
     super.onDestroy()

@@ -14,4 +14,5 @@
   <string name="stack1">Stack 1</string>
   <string name="stack2">Stack 2</string>
   <string name="stop_tracking">Stop tracking</string>
+  <string name="something_went_wrong">Something went wrong :\'(</string>
 </resources>
