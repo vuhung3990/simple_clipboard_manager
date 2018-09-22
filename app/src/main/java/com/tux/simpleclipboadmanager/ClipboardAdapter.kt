@@ -75,13 +75,15 @@ class ClipboardAdapter(private val layoutInflater: LayoutInflater) :
     val iterator = dataList.listIterator()
     while (iterator.hasNext()) {
       val item = iterator.next()
-      if (clipboard != item && clipboard.stack == item.stack) item.stack = Clipboard.STACK_UNSET
-      iterator.set(item)
-
-      changedList.add(item)
+      if (clipboard != item && clipboard.stack == item.stack) {
+        item.stack = Clipboard.STACK_UNSET
+        iterator.set(item)
+        changedList.add(item)
+      }
     }
 
     dataList[position] = clipboard
+    changedList.add(clipboard)
     notifyDataSetChanged()
 
     return changedList

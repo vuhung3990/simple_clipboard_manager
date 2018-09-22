@@ -10,15 +10,39 @@ public class Clipboard {
   public static final int STACK_1 = 1;
   public static final int STACK_2 = 2;
 
-  @PrimaryKey(autoGenerate = true)
-  public int id;
+  @PrimaryKey
+  public long id;
 
   public int stack = STACK_UNSET;
 
   public String text;
 
-  public Clipboard(String text) {
+  public Clipboard(long id, String text) {
+    this.id = id;
     this.text = text;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Clipboard clipboard = (Clipboard) o;
+
+    return id == clipboard.id && stack == clipboard.stack && (text != null ? text
+      .equals(clipboard.text) : clipboard.text == null);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = (int) (id ^ (id >>> 32));
+    result = 31 * result + stack;
+    result = 31 * result + (text != null ? text.hashCode() : 0);
+    return result;
   }
 
   @Override

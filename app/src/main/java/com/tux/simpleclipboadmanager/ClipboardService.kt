@@ -103,7 +103,7 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
 
       // save into db
       val insertNewClipboard = Maybe.fromCallable {
-        clipboardDao.insert(Clipboard(previousText.toString()))
+        clipboardDao.insert(Clipboard(System.currentTimeMillis(), previousText.toString()))
       }
         .subscribeOn(Schedulers.io())
         .subscribe()
@@ -141,7 +141,10 @@ class ClipboardService : Service(), ClipboardManager.OnPrimaryClipChangedListene
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
               { copyText(it.text) },
-              {Toast.makeText(this@ClipboardService, R.string.something_went_wrong, Toast.LENGTH_LONG).show()}
+              {
+                Toast.makeText(this@ClipboardService, R.string.something_went_wrong,
+                  Toast.LENGTH_LONG).show()
+              }
             )
           compositeDisposable.add(lastRecent)
         }

@@ -191,7 +191,7 @@ class MainActivity : AppCompatActivity(), KodeinAware,
       .setNegativeButton(R.string.cancel, null)
       .setPositiveButton(R.string.ok) { _, _ ->
         val text = input.text.toString()
-        val clipboard = Clipboard(text)
+        val clipboard = Clipboard(System.currentTimeMillis(), text)
 
         // add to top of list
         clipboardAdapter.insertItemAtTop(clipboard)
